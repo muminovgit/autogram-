@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import FeedScreen from './src/FeedScreen';
 import NewPostScreen from './src/NewPostScreen';
@@ -11,11 +13,13 @@ import { Car, Post, Profile } from './src/types';
 
 type Tab = 'feed' | 'new' | 'garage' | 'profile';
 
-const TABS: { key: Tab; icon: string; label: string }[] = [
-  { key: 'feed', icon: '🏠', label: 'Lenta' },
-  { key: 'new', icon: '➕', label: 'Yangi' },
-  { key: 'garage', icon: '🚗', label: 'Garaj' },
-  { key: 'profile', icon: '👤', label: 'Profil' },
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TABS: { key: Tab; on: IconName; off: IconName }[] = [
+  { key: 'feed', on: 'home', off: 'home-outline' },
+  { key: 'garage', on: 'car-sport', off: 'car-sport-outline' },
+  { key: 'new', on: 'add-circle', off: 'add-circle-outline' },
+  { key: 'profile', on: 'person-circle', off: 'person-circle-outline' },
 ];
 
 export default function App() {
@@ -41,11 +45,18 @@ export default function App() {
     );
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={s.root}>
-      <StatusBar style="light" />
-      <Text style={s.logo}>Autogram</Text>
+      <StatusBar style="dark" />
+      <View style={s.topBar}>
+        <Text style={s.logo}>Autogram</Text>
+        <View style={s.topIcons}>
+          <Ionicons name="heart-outline" size={27} color={colors.text} />
+          <Ionicons name="paper-plane-outline" size={26} color={colors.text} />
+        </View>
+      </View>
       <View style={{ flex: 1 }}>
-        {tab === 'feed' && <FeedScreen posts={posts} onLike={like} onComment={comment} />}
+        {tab === 'feed' && <FeedScreen posts={posts} cars={cars} userName={profile.name} onLike={like} onComment={comment} onAddCar={() => setTab('garage')} />}
         {tab === 'new' && <NewPostScreen cars={cars} onSubmit={addPost} />}
         {tab === 'garage' && (
           <GarageScreen
@@ -58,21 +69,21 @@ export default function App() {
       </View>
       <View style={s.tabs}>
         {TABS.map((t) => (
-          <Pressable key={t.key} onPress={() => setTab(t.key)} style={s.tab}>
-            <Text style={[s.tabIcon, tab !== t.key && { opacity: 0.45 }]}>{t.icon}</Text>
-            <Text style={[s.tabLabel, tab === t.key && { color: colors.accent }]}>{t.label}</Text>
+          <Pressable key={t.key} onPress={() => setTab(t.key)} style={s.tab} hitSlop={6}>
+            <Ionicons name={tab === t.key ? t.on : t.off} size={t.key === 'new' ? 32 : 28} color={colors.text} />
           </Pressable>
         ))}
       </View>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  logo: { color: colors.text, fontSize: 24, fontWeight: '800', paddingHorizontal: 16, paddingTop: 36, paddingBottom: 8 },
-  tabs: { flexDirection: 'row', borderTopWidth: 1, borderColor: colors.border, paddingBottom: 12 },
-  tab: { flex: 1, alignItems: 'center', paddingTop: 8 },
-  tabIcon: { fontSize: 22 },
-  tabLabel: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8 },
+  logo: { color: colors.text, fontSize: 28, fontWeight: '800', fontStyle: 'italic', letterSpacing: -0.5 },
+  topIcons: { flexDirection: 'row', gap: 18 },
+  tabs: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border, backgroundColor: colors.bg },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 10 },
 });
